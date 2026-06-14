@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dakboard Mood Chooser</title>
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+
+  .mood-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background: transparent;
+  }
+
+  .mood {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    background: #43a047;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .mood:hover {
+    transform: scale(1.08);
+  }
+
+  .mood:active {
+    transform: scale(0.96);
+  }
+
+  .mood.selected {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85);
+  }
+
+  .eye {
+    position: absolute;
+    top: 20px;
+    font-size: 18px;
+    color: white;
+    line-height: 1;
+  }
+
+  .eye.left {
+    left: 19px;
+  }
+
+  .eye.right {
+    right: 19px;
+  }
+
+  .star-eye {
+    font-size: 17px;
+  }
+
+  .mouth {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .smile {
+    bottom: 16px;
+    width: 34px;
+    height: 18px;
+    border-bottom: 5px solid white;
+    border-radius: 0 0 40px 40px;
+  }
+
+  .straight {
+    bottom: 24px;
+    width: 32px;
+    height: 5px;
+    background: white;
+    border-radius: 10px;
+  }
+
+  .sad {
+    bottom: 16px;
+    width: 34px;
+    height: 18px;
+    border-top: 5px solid white;
+    border-radius: 40px 40px 0 0;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="mood-wrapper">
+  <button class="mood" data-id="1" data-state="0"></button>
+  <button class="mood" data-id="2" data-state="0"></button>
+  <button class="mood" data-id="3" data-state="0"></button>
+  <button class="mood" data-id="4" data-state="0"></button>
+  <button class="mood" data-id="5" data-state="0"></button>
+  <button class="mood" data-id="6" data-state="0"></button>
+</div>
+
+<script>
+  const moods = document.querySelectorAll(".mood");
+
+  const moodStates = [
+    {
+      name: "star-smile",
+      color: "#1e88e5",
+      eyes: "star",
+      mouth: "smile"
+    },
+    {
+      name: "smile",
+      color: "#43a047",
+      eyes: "normal",
+      mouth: "smile"
+    },
+    {
+      name: "straight",
+      color: "#fdd835",
+      eyes: "normal",
+      mouth: "straight"
+    },
+    {
+      name: "sad",
+      color: "#e53935",
+      eyes: "normal",
+      mouth: "sad"
+    }
+  ];
+
+  function renderMood(button, stateIndex) {
+    const state = moodStates[stateIndex];
+
+    button.innerHTML = "";
+    button.style.background = state.color;
+    button.dataset.state = stateIndex;
+
+    const leftEye = document.createElement("span");
+    leftEye.classList.add("eye", "left");
+
+    const rightEye = document.createElement("span");
+    rightEye.classList.add("eye", "right");
+
+    if (state.eyes === "star") {
+      leftEye.textContent = "★";
+      rightEye.textContent = "★";
+      leftEye.classList.add("star-eye");
+      rightEye.classList.add("star-eye");
+    } else {
+      leftEye.textContent = "●";
+      rightEye.textContent = "●";
+    }
+
+    const mouth = document.createElement("span");
+    mouth.classList.add("mouth", state.mouth);
+
+    button.appendChild(leftEye);
+    button.appendChild(rightEye);
+    button.appendChild(mouth);
+  }
+
+  moods.forEach(button => {
+    const id = button.dataset.id;
+    const savedState = localStorage.getItem("dakboard_mood_" + id);
+    const startState = savedState !== null ? parseInt(savedState) : 0;
+
+    renderMood(button, startState);
+
+    button.addEventListener("click", () => {
+      let currentState = parseInt(button.dataset.state);
+      let nextState = currentState + 1;
+
+      if (nextState >= moodStates.length) {
+        nextState = 0;
+      }
+
+      renderMood(button, nextState);
+
+      localStorage.setItem("dakboard_mood_" + id, nextState);
+
+      window.parent.postMessage({
+        type: "dakboardMoodChooser",
+        id: id,
+        state: moodStates[nextState].name,
+        stateIndex: nextState
+      }, "*");
+    });
+  });
+</script>
+
+</body>
+</html>
